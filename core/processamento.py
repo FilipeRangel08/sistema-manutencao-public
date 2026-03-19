@@ -103,6 +103,12 @@ def processar_planilha_horas(_arquivo):
             df['Data_Calc'] = pd.NaT
             df['Semana_Trabalho'] = 0
 
+        # Tratamento de nulos nas chaves do banco (v0.6.7)
+        if 'Data_do_início_real' in df.columns:
+            df['Data_do_início_real'] = df['Data_do_início_real'].fillna('1900-01-01').astype(str)
+        if 'Hora_do_início_real' in df.columns:
+            df['Hora_do_início_real'] = df['Hora_do_início_real'].fillna('00:00:00').astype(str)
+
         return df
         
     except Exception as e:
@@ -203,6 +209,11 @@ def processar_planilha_ordens(_arquivo):
             if col_ordem:
                 df_encerradas = df_encerradas.rename(columns={col_ordem: 'Ordem'})
                 df_encerradas['Ordem'] = df_encerradas['Ordem'].astype(str).str.replace('.0', '', regex=False).str.strip()
+                # Normaliza coluna de Descrição para o Banco de Dados
+                nomes_desc = ['TEXTO BREVE', 'DESCRIÇÃO', 'DESCRICAO', 'TEXTO DA ORDEM']
+                col_desc = next((c for c in df_encerradas.columns if str(c).upper().strip() in nomes_desc), None)
+                if col_desc:
+                    df_encerradas = df_encerradas.rename(columns={col_desc: 'Descrição'})
                 
             if 'Data da nota' in df_encerradas.columns:
                 df_encerradas['Data_Calc'] = pd.to_datetime(df_encerradas['Data da nota'], errors='coerce', dayfirst=True)
@@ -225,6 +236,13 @@ def processar_planilha_ordens(_arquivo):
             if col_ordem:
                 df_abertas = df_abertas.rename(columns={col_ordem: 'Ordem'})
                 df_abertas['Ordem'] = df_abertas['Ordem'].astype(str).str.replace('.0', '', regex=False).str.strip()
+                # Normaliza coluna de Descrição para o Banco de Dados
+            nomes_desc = ['TEXTO BREVE', 'DESCRIÇÃO', 'DESCRICAO', 'TEXTO DA ORDEM']
+            col_desc = next((c for c in df_abertas.columns if str(c).upper().strip() in nomes_desc), None)
+            if col_desc:
+                df_abertas = df_abertas.rename(columns={col_desc: 'Descrição'})
+
+            
 
             df_abertas = classificar_ordem(df_abertas)
             
@@ -423,51 +441,29 @@ def obter_top_n_por_tipo(df, tipo_ordem, n=5):
         print(f"[!] Erro ao obter Top {n} para {tipo_ordem}: {e}")
         return pd.DataFrame()
 
-def unificar_dados_sap(df_horas, df_abertas, df_encerradas):
+def unificar_dados_sap(df_horas, df_ordens):
     """
-    Une as abas de Ordens e faz o merge com Horas para criar a base da IA.
+    Une a base de Horas com a base de Ordens (ambas vindas do banco).
     """
     try:
-        if df_horas is None:
-            return None
+        if df_horas is None or df_ordens is None:
+            return df_horas
         
-        # 1. União de Ordens (Abertas + Encerradas)
-        ordens_list = []
-        if df_abertas is not None and not df_abertas.empty:
-            df_ab = df_abertas.copy()
-            df_ab['Status_SAP'] = 'Aberta'
-            ordens_list.append(df_ab)
-        
-        if df_encerradas is not None and not df_encerradas.empty:
-            df_enc = df_encerradas.copy()
-            df_enc['Status_SAP'] = 'Encerrada'
-            ordens_list.append(df_enc)
-            
-        if not ordens_list:
-            return df_horas # Retorna só horas se não houver abas de ordens
-            
-        df_ordens_full = pd.concat(ordens_list, ignore_index=True)
-        
-        # 2. Merge com Horas (Left Join)
-        # Removemos duplicatas de Ordem no df_ordens para não explodir o merge de horas
-        # (Idealmente a Ordem é única no cadastro de ordens)
-        df_ordens_dedup = df_ordens_full.drop_duplicates(subset=['Ordem'])
-        
+        # Merge simples (v0.6.7) - Lógica de união de abas movida para o Banco (Upsert)
         df_completo = pd.merge(
             df_horas, 
-            df_ordens_dedup, 
+            df_ordens, 
             on='Ordem', 
             how='left',
             suffixes=('', '_sap')
         )
         
-        # 3. Limpeza final
-        # Garante que colunas de texto não fiquem com 'nan' string
+        # Limpeza final
         for col in df_completo.select_dtypes(include=['object', 'string']).columns:
             df_completo[col] = df_completo[col].replace('nan', np.nan)
             
         return df_completo
         
     except Exception as e:
-        print(f"[!] Erro na unificação de dados para IA: {e}")
+        print(f"[!] Erro na unificação de dados: {e}")
         return df_horas

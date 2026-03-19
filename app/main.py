@@ -1,6 +1,7 @@
 import os
 import sys
 import streamlit as st
+import pandas as pd
 
 # Configuração de Caminhos
 pasta_atual = os.path.dirname(os.path.abspath(__file__))
@@ -16,6 +17,7 @@ from core.processamento import (
     unificar_dados_sap
 )
 from core.ia_agente import renderizar_chat
+from core.database import load_data_from_db, upsert_ordens, upsert_horas
 
 # Imports UI (Componentizados na v0.6.6)
 from components.horas_efetivo import renderizar_horas
@@ -33,43 +35,76 @@ for chave in ['df_horas', 'df_encerradas', 'df_abertas', 'df_sap_completo', 'dic
     if chave not in st.session_state:
         st.session_state[chave] = None
 
+# =========== CARGA INICIAL DO BANCO (v0.6.7) ===========
+if st.session_state['df_horas'] is None:
+    df_ordens_db, df_horas_db = load_data_from_db()
+    
+    # TRAVA 1: Verificar se HORAS não está vazio (antes verificava ordens)
+    if df_horas_db is not None and not df_horas_db.empty:
+        st.session_state['df_horas'] = df_horas_db
+        st.session_state['df_sap_completo'] = unificar_dados_sap(df_horas_db, df_ordens_db)
+        
+        # Filtra abertas/encerradas para a UI legada
+        if df_ordens_db is not None and not df_ordens_db.empty:
+            st.session_state['df_abertas'] = df_ordens_db[df_ordens_db['Status_SAP'] == 'Aberta']
+            st.session_state['df_encerradas'] = df_ordens_db[df_ordens_db['Status_SAP'] == 'Encerrada']
+            st.session_state['dicionario_ordens'] = dict(zip(df_ordens_db['Ordem'], df_ordens_db['Descrição']))
+        else:
+            st.session_state['df_abertas'] = pd.DataFrame()
+            st.session_state['df_encerradas'] = pd.DataFrame()
+            st.session_state['dicionario_ordens'] = {}
+            
+        st.session_state['coluna_data'] = 'Data_Calc'
+
+
 # =========== BARRA LATERAL (SIDEBAR) ===========
 st.sidebar.header("📂 Base de Dados")
 st.sidebar.write("Faça o upload da Planilha Mestre (SAP) abaixo:")
 arquivo_mestre = st.sidebar.file_uploader("", type=["xlsx", "xls"], key="up_mestre")
 
-if arquivo_mestre is not None and st.session_state['df_horas'] is None:
-    with st.spinner("Processando planilhas e extraindo dados do SAP..."):
-        try:
-            # 1. Processamento de Horas
-            df_horas = processar_planilha_horas(arquivo_mestre)
-            if df_horas is None or df_horas.empty:
-                st.error("[!] Falha de Processamento: A aba de 'HORAS' não retornou dados válidos.")
-                st.stop()
-            
-            # 2. Dicionário e Ordens
-            dicionario_ordens = extrair_dicionario_ordens(arquivo_mestre)
+if arquivo_mestre is not None:
+    # CRIANDO A TRAVA: Gera um ID único para saber se este arquivo já foi lido
+    id_arquivo = f"{arquivo_mestre.name}_{arquivo_mestre.size}"
+    
+    # Só entra no processamento se este arquivo for NOVO (quebra o loop infinito)
+    if st.session_state.get('ultimo_arquivo') != id_arquivo:
+        with st.spinner("Processando SAP e sincronizando Banco de Dados..."):
             try:
+                # 1. Processamento de Horas
+                df_horas = processar_planilha_horas(arquivo_mestre)
+                if df_horas is None or df_horas.empty:
+                    st.error("[!] Falha de Processamento: A aba de 'HORAS' não retornou dados válidos.")
+                    st.stop()
+                
+                # 2. Processamento de Ordens
                 df_encerradas, df_abertas = processar_planilha_ordens(arquivo_mestre)
+                
+                # 3. Sincronização com SQLite (v0.6.7)
+                upsert_horas(df_horas)
+                
+                # Prepara união para persistência
+                ordens_list = []
+                if df_abertas is not None and not df_abertas.empty:
+                    df_ab = df_abertas.copy(); df_ab['Status_SAP'] = 'Aberta'
+                    ordens_list.append(df_ab)
+                if df_encerradas is not None and not df_encerradas.empty:
+                    df_enc = df_encerradas.copy(); df_enc['Status_SAP'] = 'Encerrada'
+                    ordens_list.append(df_enc)
+                
+                if ordens_list:
+                    df_ordens_merged = pd.concat(ordens_list, ignore_index=True)
+                    upsert_ordens(df_ordens_merged)
+                
+                # SINALIZA QUE O ARQUIVO FOI PROCESSADO (Salva a trava)
+                st.session_state['ultimo_arquivo'] = id_arquivo
+                
+                st.success("Dados sincronizados com sucesso!")
+                st.cache_data.clear() # Limpa cache para forçar recarga do banco
+                st.rerun()
             except Exception as e:
-                df_encerradas, df_abertas = None, None
-                st.warning(f"Aviso: Não foi possível processar abas de Ordens. Erro: {e}")
+                st.error(f"Erro inesperado durante a carga: {e}")
+                st.stop()
 
-            # 3. Unificação para IA
-            df_sap_completo = unificar_dados_sap(df_horas, df_abertas, df_encerradas)
-
-            # 4. Estado Central
-            st.session_state['df_horas'] = df_horas
-            st.session_state['dicionario_ordens'] = dicionario_ordens
-            st.session_state['df_encerradas'] = df_encerradas
-            st.session_state['df_abertas'] = df_abertas
-            st.session_state['df_sap_completo'] = df_sap_completo
-            st.session_state['coluna_data'] = 'Data_Calc' if 'Data_Calc' in df_horas.columns else None
-            
-            st.rerun()
-        except Exception as e:
-            st.error(f"Erro inesperado durante a carga: {e}")
-            st.stop()
 
 # =========== RENDERIZAÇÃO DA PÁGINA (ABAS) ===========
 if st.session_state.get('df_horas') is not None:

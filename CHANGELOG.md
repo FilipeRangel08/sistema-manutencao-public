@@ -2,6 +2,14 @@
 
 Registro de funcionalidades implementadas para evitar duplicação de código.
 
+## v0.6.7 — Persistência SQLite e Motor de Dados
+- **[NEW]** `core/database.py`: implementação de camada de persistência com SQLite (UPSERT via `ON CONFLICT`).
+- **[MOD]** `app/main.py`: fluxo de carga refatorado para priorizar o banco de dados; upload agora sincroniza e recarrega automaticamente.
+- **[MOD]** `core/processamento.py`: 
+  - `processar_planilha_horas()`: adicionado tratamento de nulos (`fillna`) em datas/horas para chaves do banco.
+  - `unificar_dados_sap()`: simplificada e otimizada para operar sobre dados persistidos.
+- **[FIX]** `components/ordens_pendentes.py`: corrigida quebra de indentação e lógica de filtros após refatoração global.
+
 ## v0.6.6 — Arquitetura de Componentes (Modularização)
 - **[NEW]** Diretório `components/`: implementação de lógica de UI segmentada por arquivos.
 - **[MOD]** `app/main.py`: agora atua como orquestrador central, importando e chamando componentes isolados.
