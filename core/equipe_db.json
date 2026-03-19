@@ -1,0 +1,167 @@
+[
+    {
+        "Matricula": "232454",
+        "Nome": "EDILSON DO NASCIMENTO RIBEIRO\n",
+        "Regime": "ADM",
+        "Horas Base (Semana)": 39.0,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90015435",
+        "Nome": "EDICARLOS SILVA DE SOUZA\n",
+        "Regime": "Turno A",
+        "Horas Base (Semana)": 32.5,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90015130",
+        "Nome": "SHARON MAKLIN DE LIMA MACEDO\n",
+        "Regime": "Turno C",
+        "Horas Base (Semana)": 32.5,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90005088",
+        "Nome": "ADEMAR\n  LIMA DOS SANTOS",
+        "Regime": "Turno C",
+        "Horas Base (Semana)": 32.5,
+        "Exc_S1": 4.5,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90000248",
+        "Nome": "JOELTON DA SILVA SUZART\n",
+        "Regime": "ADM",
+        "Horas Base (Semana)": 39.0,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90019335",
+        "Nome": "GEAN PEREIRA DOS SANTOS\n",
+        "Regime": "ADM",
+        "Horas Base (Semana)": 39.0,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "226247",
+        "Nome": "JOÃO ALBERTO DOS SANTOS\n",
+        "Regime": "ADM",
+        "Horas Base (Semana)": 39.0,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90018166",
+        "Nome": "VALMIR MATOS DOS SANTOS\n",
+        "Regime": "ADM",
+        "Horas Base (Semana)": 39.0,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "232255",
+        "Nome": "DAVI\n  CIRINO MOURA DA CRUZ SILVA",
+        "Regime": "ADM",
+        "Horas Base (Semana)": 39.0,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "232254",
+        "Nome": "CLAUDIO\n  DE OLIVEIRA SANTANA",
+        "Regime": "ADM",
+        "Horas Base (Semana)": 39.0,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90000249",
+        "Nome": "CLEBSON SOARES SANTOS\n",
+        "Regime": "Turno B",
+        "Horas Base (Semana)": 32.5,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "232250",
+        "Nome": "THALES ALBERTO MORAIS GOBIRA\n",
+        "Regime": "ADM",
+        "Horas Base (Semana)": 39.0,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90013559",
+        "Nome": "OSMAR CUPERTINO OLIVEIRA\n",
+        "Regime": "Turno B",
+        "Horas Base (Semana)": 32.5,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90018771",
+        "Nome": "JOSIAS PAIVA\n  SANTOS",
+        "Regime": "ADM",
+        "Horas Base (Semana)": 39.0,
+        "Exc_S1": 10.5,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    },
+    {
+        "Matricula": "90018993",
+        "Nome": "KAUAN DOS SANTOS AVELINO\n",
+        "Regime": "Turno A",
+        "Horas Base (Semana)": 32.5,
+        "Exc_S1": 0.0,
+        "Exc_S2": 0.0,
+        "Exc_S3": 0.0,
+        "Exc_S4": 0.0,
+        "Exc_S5": 0.0
+    }
+]
