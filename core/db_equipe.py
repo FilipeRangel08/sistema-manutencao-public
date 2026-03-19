@@ -4,6 +4,10 @@ import os
 import json
 import pandas as pd
 
+DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
+PASTA_DATA = os.path.abspath(os.path.join(DIRETORIO_ATUAL, "..", "data"))
+ARQUIVO_JSON = os.path.join(PASTA_DATA, "Equipe_db.json")
+
 def _get_caminho_db():
     """Retorna o caminho absoluto e seguro do arquivo JSON do banco de dados."""
     pasta_atual = os.path.dirname(os.path.abspath(__file__))

@@ -26,7 +26,8 @@ def renderizar_planejamento_semanal(df_abertas):
                 col_nota = next((c for c in ['Nota'] if c in df_plan.columns), None)
                 col_desc = next((c for c in ['Descrição', 'Texto breve'] if c in df_plan.columns), None)
                 col_prio_txt = next((c for c in ['Prioridade Texto', 'TextPrioridade'] if c in df_plan.columns), None)
-                col_data = next((c for c in ['Data de entrada', 'Início programado', 'Data', 'Criado em', 'Data ref.'] if c in df_plan.columns), None)
+                col_data = next((c for c in ['Data da nota', 'Data de entrada', 'Início programado', 'Data', 'Criado em', 'Data ref.'] if c in df_plan.columns), None)
+
                 
                 if not col_centro:
                     st.error("Coluna de Equipe/Centro de Trabalho não encontrada no arquivo.")

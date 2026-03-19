@@ -3,7 +3,19 @@ import pandas as pd
 import streamlit as st
 import os
 
-DB_NAME = "manutencao.db"
+# === NOVA CONFIGURAÇÃO DE CAMINHO (PASTA DATA) ===
+# 1. Pega o diretório atual de onde este script está (pasta 'core')
+DIRETORIO_ATUAL = os.path.dirname(os.path.abspath(__file__))
+
+# 2. Volta um nível (para a raiz) e entra na pasta 'data'
+PASTA_DATA = os.path.abspath(os.path.join(DIRETORIO_ATUAL, "..", "data"))
+
+# 3. Garante que a pasta 'data' exista (se não existir, ele cria)
+os.makedirs(PASTA_DATA, exist_ok=True)
+
+# 4. Define o caminho final do banco de dados
+DB_NAME = os.path.join(PASTA_DATA, "manutencao.db")
+# ================================================
 
 def get_connection():
     """Retorna uma conexão com o banco de dados SQLite."""
@@ -14,7 +26,7 @@ def inicializar_banco():
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Tabela tb_ordens
+    # Tabela tb_ordens (AGORA COM PRIORIDADE E NOTA)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tb_ordens (
         ordem TEXT PRIMARY KEY,
@@ -24,7 +36,9 @@ def inicializar_banco():
         descricao TEXT,
         equipamento TEXT,
         local_instalacao TEXT,
-        status_sap TEXT
+        status_sap TEXT,
+        prioridade TEXT,
+        nota TEXT
     )
     """)
     
@@ -55,7 +69,7 @@ def upsert_ordens(df):
     
     conn = get_connection()
     
-    # Mapeamento para nomes do banco (Camada Anticorrupção)
+    # Mapeamento para nomes do banco (INCLUINDO PRIORIDADE E NOTA)
     mapeamento = {
         'Ordem': 'ordem',
         'Classificacao_Ordem': 'classificacao_ordem',
@@ -64,13 +78,15 @@ def upsert_ordens(df):
         'Descrição': 'descricao',
         'Equipamento': 'equipamento',
         'Denominação do loc.instalação': 'local_instalacao',
-        'Status_SAP': 'status_sap'
+        'Status_SAP': 'status_sap',
+        'Prioridade': 'prioridade',
+        'Nota': 'nota'
     }
     
     df_db = df.rename(columns={k: v for k, v in mapeamento.items() if k in df.columns})
-    colunas_banco = ['ordem', 'classificacao_ordem', 'centro_trabalho', 'data_nota', 'descricao', 'equipamento', 'local_instalacao', 'status_sap']
+    colunas_banco = ['ordem', 'classificacao_ordem', 'centro_trabalho', 'data_nota', 'descricao', 'equipamento', 'local_instalacao', 'status_sap', 'prioridade', 'nota']
     
-    # GARANTIA ANTI-ERRO: Cria a coluna em branco caso ela não exista na planilha
+    # GARANTIA ANTI-ERRO
     for col in colunas_banco:
         if col not in df_db.columns:
             df_db[col] = None
@@ -82,8 +98,8 @@ def upsert_ordens(df):
     
     cursor = conn.cursor()
     cursor.execute("""
-    INSERT INTO tb_ordens (ordem, classificacao_ordem, centro_trabalho, data_nota, descricao, equipamento, local_instalacao, status_sap)
-    SELECT ordem, classificacao_ordem, centro_trabalho, data_nota, descricao, equipamento, local_instalacao, status_sap FROM temp_ordens WHERE 1=1
+    INSERT INTO tb_ordens (ordem, classificacao_ordem, centro_trabalho, data_nota, descricao, equipamento, local_instalacao, status_sap, prioridade, nota)
+    SELECT ordem, classificacao_ordem, centro_trabalho, data_nota, descricao, equipamento, local_instalacao, status_sap, prioridade, nota FROM temp_ordens WHERE 1=1
     ON CONFLICT(ordem) DO UPDATE SET
         status_sap = excluded.status_sap,
         classificacao_ordem = excluded.classificacao_ordem,
@@ -91,7 +107,9 @@ def upsert_ordens(df):
         data_nota = excluded.data_nota,
         descricao = excluded.descricao,
         equipamento = excluded.equipamento,
-        local_instalacao = excluded.local_instalacao
+        local_instalacao = excluded.local_instalacao,
+        prioridade = excluded.prioridade,
+        nota = excluded.nota
     """)
     
     cursor.execute("DROP TABLE temp_ordens")
@@ -105,7 +123,6 @@ def upsert_horas(df):
         
     conn = get_connection()
     
-    # Mapeamento para nomes do banco
     mapeamento = {
         'Matricula': 'matricula',
         'Ordem': 'ordem',
@@ -121,7 +138,6 @@ def upsert_horas(df):
     df_db = df.rename(columns={k: v for k, v in mapeamento.items() if k in df.columns})
     colunas_banco = ['matricula', 'ordem', 'trabalho_real', 'data_inicio', 'hora_inicio', 'data_fim', 'hora_fim', 'data_calc', 'semana_trabalho']
     
-    # GARANTIA ANTI-ERRO
     for col in colunas_banco:
         if col not in df_db.columns:
             df_db[col] = None
@@ -146,7 +162,6 @@ def upsert_horas(df):
     conn.commit()
     conn.close()
 
-
 @st.cache_data(show_spinner="Carregando dados do banco...")
 def load_data_from_db():
     """Lê os dados do banco e retorna os DataFrames configurados."""
@@ -159,7 +174,7 @@ def load_data_from_db():
         df_ordens = pd.read_sql_query("SELECT * FROM tb_ordens", conn)
         df_horas = pd.read_sql_query("SELECT * FROM tb_horas", conn)
         
-        # Mapeamento reverso para manter compatibilidade com UI
+        # Mapeamento reverso incluindo Prioridade e Nota
         map_ordens = {
             'ordem': 'Ordem',
             'classificacao_ordem': 'Classificacao_Ordem',
@@ -168,7 +183,9 @@ def load_data_from_db():
             'descricao': 'Descrição',
             'equipamento': 'Equipamento',
             'local_instalacao': 'Denominação do loc.instalação',
-            'status_sap': 'Status_SAP'
+            'status_sap': 'Status_SAP',
+            'prioridade': 'Prioridade',
+            'nota': 'Nota'
         }
         
         map_horas = {
@@ -186,12 +203,10 @@ def load_data_from_db():
         df_ordens = df_ordens.rename(columns=map_ordens)
         df_horas = df_horas.rename(columns=map_horas)
         
-        # Conversão de TIPOS (Crítico para Pandas)
         if not df_horas.empty:
             df_horas['Data_Calc'] = pd.to_datetime(df_horas['Data_Calc'], errors='coerce')
             
         if not df_ordens.empty and 'Data da nota' in df_ordens.columns:
-            # Algumas ordens podem não ter data nota opcional no SAP
             df_ordens['Data_Calc'] = pd.to_datetime(df_ordens['Data da nota'], errors='coerce')
             
         return df_ordens, df_horas
